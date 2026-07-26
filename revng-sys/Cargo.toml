@@ -1,0 +1,10 @@
+[package]
+name = "revng-sys"
+version = "0.1.0"
+edition = "2024"
+description = "Low-level FFI bindings to the revng"
+links = "revng"
+license = "MIT"
+
+[build-dependencies]
+revng-build = { version = "0.1", path = "../revng-build" }
