@@ -5,4 +5,12 @@ fn main() {
     println!("cargo::metadata=sdk={}", sdk.prefix().display());
     println!("cargo::metadata=llvm={}", sdk.llvm().display());
     println!("cargo::metadata=llvm_major={}", sdk.llvm_major());
+    println!(
+        "cargo::rustc-env=REVNG_SDK_INCLUDE={}",
+        sdk.prefix().join("include").display()
+    );
+    println!(
+        "cargo::rustc-env=REVNG_SDK_LIB={}",
+        sdk.prefix().join("lib").display()
+    );
 }

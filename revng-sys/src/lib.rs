@@ -430,17 +430,33 @@ unsafe extern "C" {
         path_components: *const *const c_char,
         error: *mut rp_error,
     ) -> *mut rp_buffer;
+    /// Transactionally transform an LLVM container.
+    ///
+    /// `object` names which object of the container to transform, spelled as
+    /// the key used elsewhere (for example `0x1000:Code_x86_64`). Containers
+    /// holding one module per function need it; a null pointer transforms
+    /// every object the container holds, which is what a whole-binary
+    /// container wants.
     pub fn rp_manager_transform_llvm_module(
         manager: *mut rp_manager,
         step_name: *const c_char,
         container_name: *const c_char,
+        object: *const c_char,
         callbacks: *const rp_llvm_module_callbacks,
         error: *mut rp_error,
     ) -> bool;
+    /// Transactionally transform an MLIR container.
+    ///
+    /// `object` names which object of the container to transform, spelled as
+    /// the key used elsewhere (for example `0x1000:Code_x86_64`). Containers
+    /// holding one module per function need it; a null pointer transforms
+    /// every object the container holds, which is what a whole-binary
+    /// container wants.
     pub fn rp_manager_transform_mlir_module(
         manager: *mut rp_manager,
         step_name: *const c_char,
         container_name: *const c_char,
+        object: *const c_char,
         callbacks: *const rp_mlir_module_callbacks,
         error: *mut rp_error,
     ) -> bool;

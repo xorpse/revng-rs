@@ -8,3 +8,6 @@ license = "MIT"
 
 [build-dependencies]
 revng-build = { version = "0.1", path = "../revng-build" }
+
+[dev-dependencies]
+object = "0.36"

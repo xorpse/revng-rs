@@ -26,8 +26,22 @@ const MLIR_LIBRARIES: [&str; 3] = [
     "MLIRCAPITransforms",
     "MLIRCAPIRegisterEverything",
 ];
-const BASE_LIBRARIES: [&str; 3] = ["revngPipelineC", "revngSupport", "revngModel"];
-const REGISTRY_LIBRARIES: [&str; 2] = ["revngFunctionCallIdentification", "revngValueMaterializer"];
+const BASE_LIBRARIES: [&str; 4] = [
+    "revngPipelineC",
+    "revngRunner",
+    "revngSupport",
+    "revngModel",
+];
+// Libraries whose only contribution is what they register from a static
+// initialiser. Nothing refers to a symbol in them, so `-dead_strip_dylibs` and
+// `--as-needed` drop them given the chance, and the failure is a quiet one:
+// `revngPipebox` carries every pipe, container and analysis, so losing it
+// surfaces much later as "unknown pipe 'lift'".
+const REGISTRY_LIBRARIES: [&str; 3] = [
+    "revngPipebox",
+    "revngFunctionCallIdentification",
+    "revngValueMaterializer",
+];
 const RUNTIME_LIBRARIES: [&str; 2] = ["libc++.so", "libc++abi.so"];
 const DEPENDENCIES: [Dependency; 2] = [
     Dependency {
@@ -609,6 +623,7 @@ mod test {
         let fixture = Fixture::new("macos");
         for path in [
             "sdk/lib/librevngPipelineC.dylib",
+            "sdk/lib/librevngPipebox.dylib",
             "sdk/lib/librevngLiftReference.dylib",
             "sdk/lib/librevngFunctionCallIdentification.dylib",
             "sdk/lib/librevngValueMaterializer.dylib",
@@ -651,6 +666,9 @@ mod test {
                     "cargo::rustc-link-arg=-Wl,-needed_library,{root}/sdk/lib/librevngLiftReference.dylib"
                 ),
                 &format!(
+                    "cargo::rustc-link-arg=-Wl,-needed_library,{root}/sdk/lib/librevngPipebox.dylib"
+                ),
+                &format!(
                     "cargo::rustc-link-arg=-Wl,-needed_library,{root}/sdk/lib/librevngFunctionCallIdentification.dylib"
                 ),
                 &format!(
@@ -682,6 +700,7 @@ mod test {
         let fixture = Fixture::new("linux");
         for path in [
             "sdk/lib/librevngPipelineC.so",
+            "sdk/lib/librevngPipebox.so",
             "sdk/lib/librevngLiftReference.so",
             "sdk/lib/librevngFunctionCallIdentification.so",
             "sdk/lib/librevngValueMaterializer.so",
@@ -710,6 +729,7 @@ mod test {
             [
                 &"cargo::rustc-link-arg=-Wl,--no-as-needed".to_owned(),
                 &format!("cargo::rustc-link-arg={root}/sdk/lib/librevngLiftReference.so"),
+                &format!("cargo::rustc-link-arg={root}/sdk/lib/librevngPipebox.so"),
                 &format!(
                     "cargo::rustc-link-arg={root}/sdk/lib/librevngFunctionCallIdentification.so"
                 ),
@@ -732,6 +752,7 @@ mod test {
         let fixture = Fixture::new("portable");
         for path in [
             "sdk/lib/librevngPipelineC.dylib",
+            "sdk/lib/librevngPipebox.dylib",
             "sdk/lib/librevngLiftReference.dylib",
             "sdk/lib/revng/analyses/librevngA.dylib",
             "llvm/lib/libLLVMCore.dylib",

@@ -14,11 +14,11 @@ use crate::{DEPENDENCIES, Dependency, Error, Os};
 
 const REVNG: Source = Source {
     repository: "xorpse/revng",
-    commit: "95e27f68bf3181b8718b542e836d53e928dccd9f",
+    commit: "16bf87498e5fba2b270aa278645335b917c2e68d",
 };
 const LLVM: Source = Source {
     repository: "revng/llvm-project",
-    commit: "c9bb030b3d3baca5b21a8694e7207da713cdf6bb",
+    commit: "b93d654bc9267ca2128528583558db618ff9cc1d",
 };
 const MIN_CLANG_MAJOR: u32 = 16;
 const MIN_LIBCXX_VERSION: u32 = 170000;
@@ -305,7 +305,8 @@ impl Cache {
                 .define("REVNG_SDK_BUILD", "ON")
                 .define("REVNG_BACKEND_LIBTCG", "OFF")
                 .define("REVNG_BUILD_RUNTIME_SUPPORT", "OFF")
-                .define("REVNG_BUNDLE_TOOLCHAIN_RUNTIME", "OFF"),
+                .define("REVNG_BUNDLE_TOOLCHAIN_RUNTIME", "OFF")
+                .define("REVNG_PIPEBOX_PYTHON", "OFF"),
         );
         if os == Os::Linux {
             configure_revng = configure_revng
@@ -617,7 +618,7 @@ mod test {
     fn cache_key_is_deterministic() {
         assert_eq!(
             key_path(Path::new("/cache"), "aarch64-apple-darwin"),
-            PathBuf::from("/cache/aarch64-apple-darwin/95e27f68bf31-c9bb030b3d3b")
+            PathBuf::from("/cache/aarch64-apple-darwin/16bf87498e5f-b93d654bc926")
         );
     }
 
@@ -657,6 +658,7 @@ mod test {
             assert!(revng.contains("-DREVNG_SDK_BUILD=ON"));
             assert!(revng.contains("-DREVNG_BACKEND_LIBTCG=OFF"));
             assert!(revng.contains("-DREVNG_BUNDLE_TOOLCHAIN_RUNTIME=OFF"));
+            assert!(revng.contains("-DREVNG_PIPEBOX_PYTHON=OFF"));
             assert!(revng.contains("-DCMAKE_INSTALL_PREFIX=/cache/target/key/sdk"));
             match os {
                 Os::Linux => {
