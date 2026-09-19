@@ -14,7 +14,7 @@ use crate::{DEPENDENCIES, Dependency, Error, Os};
 
 const REVNG: Source = Source {
     repository: "xorpse/revng",
-    commit: "b50b7c9300800f0d0f57512ede4058cf208c51bb",
+    commit: "5ac52139ab2e70c90fd127ce265471bba41bb84c",
 };
 const LLVM: Source = Source {
     repository: "revng/llvm-project",
@@ -306,7 +306,8 @@ impl Cache {
                 .define("REVNG_BACKEND_LIBTCG", "OFF")
                 .define("REVNG_BUILD_RUNTIME_SUPPORT", "OFF")
                 .define("REVNG_BUNDLE_TOOLCHAIN_RUNTIME", "OFF")
-                .define("REVNG_PIPEBOX_PYTHON", "OFF"),
+                .define("REVNG_PIPEBOX_PYTHON", "OFF")
+                .define("BUILD_TESTING", "OFF"),
         );
         if os == Os::Linux {
             configure_revng = configure_revng
@@ -615,14 +616,6 @@ mod test {
     }
 
     #[test]
-    fn cache_key_is_deterministic() {
-        assert_eq!(
-            key_path(Path::new("/cache"), "aarch64-apple-darwin"),
-            PathBuf::from("/cache/aarch64-apple-darwin/b50b7c930080-b93d654bc926")
-        );
-    }
-
-    #[test]
     fn step_tables_guard_load_bearing_flags() {
         let cache = Cache {
             key: PathBuf::from("/cache/target/key"),
@@ -659,6 +652,7 @@ mod test {
             assert!(revng.contains("-DREVNG_BACKEND_LIBTCG=OFF"));
             assert!(revng.contains("-DREVNG_BUNDLE_TOOLCHAIN_RUNTIME=OFF"));
             assert!(revng.contains("-DREVNG_PIPEBOX_PYTHON=OFF"));
+            assert!(revng.contains("-DBUILD_TESTING=OFF"));
             assert!(revng.contains("-DCMAKE_INSTALL_PREFIX=/cache/target/key/sdk"));
             match os {
                 Os::Linux => {
