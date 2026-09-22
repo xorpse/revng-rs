@@ -177,16 +177,18 @@ pub struct rp_named_typed_register {
 }
 
 unsafe extern "C" {
-    pub fn rp_initialize(
+    pub fn rp_initialise(
         argc: c_int,
         argv: *const *const c_char,
         signals_to_preserve_count: u32,
         signals_to_preserve: *mut c_int,
     ) -> bool;
     pub fn rp_shutdown() -> bool;
+    pub fn rp_is_initialised() -> bool;
     pub fn rp_manager_create_from_address_space(
         callbacks: *const rp_address_space_callbacks,
-        materialize_for_serialization: u64,
+        pipeline: *const c_char,
+        materialise_for_serialisation: u64,
         pipeline_flags_count: u64,
         pipeline_flags: *const *const c_char,
         execution_directory: *const c_char,
@@ -197,7 +199,7 @@ unsafe extern "C" {
         entry_point: *const c_char,
         mappings_count: u64,
         mappings: *const rp_file_address_space_mapping,
-        materialize_for_serialization: u64,
+        materialise_for_serialisation: u64,
         pipeline_flags_count: u64,
         pipeline_flags: *const *const c_char,
         execution_directory: *const c_char,
@@ -223,7 +225,7 @@ unsafe extern "C" {
         destination: *mut u8,
         error: *mut rp_error,
     ) -> bool;
-    pub fn rp_manager_materialize_address_space(
+    pub fn rp_manager_materialise_address_space(
         manager: *mut rp_manager,
         error: *mut rp_error,
     ) -> bool;
@@ -421,7 +423,7 @@ unsafe extern "C" {
         address: *const c_char,
         error: *mut rp_error,
     ) -> *mut rp_buffer;
-    pub fn rp_manager_produce_artifact(
+    pub fn rp_manager_produce_artefact(
         manager: *mut rp_manager,
         step_name: *const c_char,
         container_name: *const c_char,

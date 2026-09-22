@@ -334,6 +334,7 @@ impl Sdk {
             "REVNG_LLVM",
             "REVNG_BUILD_CACHE",
             "REVNG_BUILD_PORTABLE",
+            "REVNG_SOURCE",
         ] {
             println!("cargo::rerun-if-env-changed={variable}");
         }

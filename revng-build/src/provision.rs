@@ -124,7 +124,8 @@ pub(crate) struct Cache {
 impl Cache {
     pub(crate) fn ensure(os: Os) -> Result<Self, Error> {
         let cache = Self::resolve(os)?;
-        if cache.complete()? {
+        let local = env::var_os("REVNG_SOURCE").map(PathBuf::from);
+        if local.is_none() && cache.complete()? {
             return Ok(cache);
         }
         preflight(os)?;
@@ -137,24 +138,30 @@ impl Cache {
         let guard = lock
             .write()
             .map_err(|source| Error::io(cache.lock(), source))?;
-        if cache.complete()? {
+        if local.is_none() && cache.complete()? {
             return Ok(cache);
         }
 
-        for directory in [cache.llvm(), cache.sdk(), cache.scratch()] {
-            if directory.exists() {
-                fs::remove_dir_all(&directory).map_err(|source| Error::io(&directory, source))?;
+        if local.is_none() {
+            for directory in [cache.llvm(), cache.sdk(), cache.scratch()] {
+                if directory.exists() {
+                    fs::remove_dir_all(&directory)
+                        .map_err(|source| Error::io(&directory, source))?;
+                }
             }
         }
         fs::create_dir_all(cache.scratch()).map_err(|source| Error::io(cache.scratch(), source))?;
 
-        cache.fetch_sources()?;
+        cache.fetch_sources(local.is_some())?;
         let prefixes = dependency_prefixes(os)?;
-        for step in cache.steps(os, &prefixes) {
+        for step in cache.steps(os, &prefixes, local.as_deref()) {
             step.run(&cache)?;
         }
 
-        fs::remove_dir_all(cache.scratch()).map_err(|source| Error::io(cache.scratch(), source))?;
+        if local.is_none() {
+            fs::remove_dir_all(cache.scratch())
+                .map_err(|source| Error::io(cache.scratch(), source))?;
+        }
         fs::write(cache.marker(), REVNG.commit)
             .map_err(|source| Error::io(cache.marker(), source))?;
         drop(guard);
@@ -208,9 +215,18 @@ impl Cache {
         }
     }
 
-    fn fetch_sources(&self) -> Result<(), Error> {
+    fn fetch_sources(&self, skip_revng: bool) -> Result<(), Error> {
         let scratch = self.scratch();
-        for origin in [&REVNG, &LLVM] {
+        let origins = if skip_revng {
+            vec![&LLVM]
+        } else {
+            vec![&REVNG, &LLVM]
+        };
+        for origin in origins {
+            if scratch.join(origin.directory()).exists() {
+                continue;
+            }
+
             let url = origin.url();
             let response = ureq::get(&url).call().map_err(|source| Error::Download {
                 url: url.clone(),
@@ -224,7 +240,7 @@ impl Cache {
         Ok(())
     }
 
-    fn steps(&self, os: Os, dependency_prefixes: &[PathBuf]) -> Vec<Step> {
+    fn steps(&self, os: Os, dependency_prefixes: &[PathBuf], local: Option<&Path>) -> Vec<Step> {
         let scratch = self.scratch();
         let venv = scratch.join("venv");
         let venv_python = venv.join("bin/python");
@@ -289,7 +305,10 @@ impl Cache {
         let mut configure_revng = cmake_common(
             Step::new("configure-revng", "cmake")
                 .arg("-S")
-                .arg(scratch.join(REVNG.directory()))
+                .arg(match local {
+                    Some(path) => path.to_path_buf(),
+                    None => scratch.join(REVNG.directory()),
+                })
                 .arg("-B")
                 .arg(scratch.join("revng-build"))
                 .arg("-G")
@@ -362,8 +381,12 @@ fn default_root(os: Os) -> Option<PathBuf> {
 }
 
 fn key_path(root: &Path, target: &str) -> PathBuf {
+    let revng = match env::var_os("REVNG_SOURCE") {
+        Some(_) => "local",
+        None => &REVNG.commit[..12],
+    };
     root.join(target)
-        .join(format!("{}-{}", &REVNG.commit[..12], &LLVM.commit[..12]))
+        .join(format!("{}-{}", revng, &LLVM.commit[..12]))
 }
 
 fn preflight(os: Os) -> Result<(), Error> {
@@ -621,7 +644,7 @@ mod test {
             key: PathBuf::from("/cache/target/key"),
         };
         for os in [Os::Linux, Os::MacOs] {
-            let steps = cache.steps(os, &[]);
+            let steps = cache.steps(os, &[], None);
             let names = steps.iter().map(|step| step.name).collect::<Vec<_>>();
             let expected: &[&str] = &[
                 "venv",
