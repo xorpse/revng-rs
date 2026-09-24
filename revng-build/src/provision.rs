@@ -14,7 +14,7 @@ use crate::{DEPENDENCIES, Dependency, Error, Os};
 
 const REVNG: Source = Source {
     repository: "xorpse/revng",
-    commit: "f162098ca303841ee16131cb3eb9d3f33c1ed36e",
+    commit: "5f067927f775dfbe358545d7b604c90dfcd7859b",
 };
 const LLVM: Source = Source {
     repository: "revng/llvm-project",
