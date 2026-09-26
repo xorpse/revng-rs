@@ -23,11 +23,6 @@ macro_rules !opaque {
 opaque!(
     rp_manager,
     rp_binary_view,
-    rp_kind,
-    rp_step,
-    rp_container,
-    rp_container_identifier,
-    rp_target,
     rp_error,
     rp_document_error,
     rp_simple_error,
@@ -35,7 +30,6 @@ opaque!(
     rp_diff_map,
     rp_string_map,
     rp_invalidations,
-    rp_container_targets_map,
 );
 
 #[repr(C)]
@@ -425,11 +419,8 @@ unsafe extern "C" {
     ) -> *mut rp_buffer;
     pub fn rp_manager_produce_artefact(
         manager: *mut rp_manager,
-        step_name: *const c_char,
-        container_name: *const c_char,
-        kind_name: *const c_char,
-        path_components_count: u64,
-        path_components: *const *const c_char,
+        artefact_name: *const c_char,
+        object: *const c_char,
         error: *mut rp_error,
     ) -> *mut rp_buffer;
     /// Transactionally transform an LLVM container.
@@ -464,36 +455,6 @@ unsafe extern "C" {
     ) -> bool;
     pub fn rp_manager_save(manager: *mut rp_manager) -> bool;
     pub fn rp_manager_destroy(manager: *mut rp_manager);
-    pub fn rp_manager_get_container_identifier_from_name(
-        manager: *const rp_manager,
-        name: *const c_char,
-    ) -> *const rp_container_identifier;
-    pub fn rp_manager_get_step_from_name(
-        manager: *mut rp_manager,
-        name: *const c_char,
-    ) -> *mut rp_step;
-    pub fn rp_manager_get_kind_from_name(
-        manager: *const rp_manager,
-        name: *const c_char,
-    ) -> *const rp_kind;
-    pub fn rp_manager_produce_targets(
-        manager: *mut rp_manager,
-        step: *const rp_step,
-        container: *const rp_container,
-        targets_count: u64,
-        targets: *const *const rp_target,
-        error: *mut rp_error,
-    ) -> *mut rp_buffer;
-    pub fn rp_step_get_container(
-        step: *mut rp_step,
-        identifier: *const rp_container_identifier,
-    ) -> *mut rp_container;
-    pub fn rp_target_create(
-        kind: *const rp_kind,
-        path_components_count: u64,
-        path_components: *const *const c_char,
-    ) -> *mut rp_target;
-    pub fn rp_target_destroy(target: *mut rp_target);
     pub fn rp_error_create() -> *mut rp_error;
     pub fn rp_error_destroy(error: *mut rp_error);
     pub fn rp_error_get_document_error(error: *mut rp_error) -> *mut rp_document_error;
@@ -516,20 +477,11 @@ unsafe extern "C" {
     ) -> *mut rp_diff_map;
     pub fn rp_manager_run_analysis(
         manager: *mut rp_manager,
-        step_name: *const c_char,
         analysis_name: *const c_char,
-        target_map: *const rp_container_targets_map,
         options: *const rp_string_map,
         invalidations: *mut rp_invalidations,
         error: *mut rp_error,
     ) -> *mut rp_diff_map;
-    pub fn rp_container_targets_map_create() -> *mut rp_container_targets_map;
-    pub fn rp_container_targets_map_add(
-        map: *mut rp_container_targets_map,
-        container: *const rp_container,
-        target: *const rp_target,
-    );
-    pub fn rp_container_targets_map_destroy(map: *mut rp_container_targets_map);
     pub fn rp_string_map_create() -> *mut rp_string_map;
     pub fn rp_string_map_destroy(map: *mut rp_string_map);
     pub fn rp_invalidations_create() -> *mut rp_invalidations;
